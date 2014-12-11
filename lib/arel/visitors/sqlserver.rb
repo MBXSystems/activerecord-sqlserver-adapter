@@ -74,7 +74,9 @@ module Arel
           select_frags << '__order'
         end
 
-        projection_list = projections.map { |x| projection_to_sql_remove_distinct(x, core, a) }.join(', ')
+        projection_list = projections.map { |x| projection_to_sql_remove_distinct(x, core, a) }
+        partitions = projection_list.map{ |proj| proj.gsub(/\.\*/, '.[id]') }.join(', ')
+        projection_list = projection_list.join(', ')
 
         sql = [
           ('SELECT'),
@@ -90,7 +92,7 @@ module Arel
                   ("ORDER BY #{orders.map { |x| visit(x, a) }.join(', ')}" unless orders.empty?),
                 (') AS __order'),
                 (', ROW_NUMBER() OVER ('),
-                  ("PARTITION BY #{projection_list}" if !orders.empty?),
+                  ("PARTITION BY #{partitions}" if !orders.empty?),
                   (" ORDER BY #{orders.map { |x| visit(x, a) }.join(', ')}" unless orders.empty?),
                 (') AS __joined_row_num')
               ].join('')
@@ -101,7 +103,7 @@ module Arel
             (visit(core.having, a) if core.having),
           (') AS __sq'),
           ('WHERE __joined_row_num = 1'),
-          ('ORDER BY __order' unless o.offset)
+          ('ORDER BY __sq.__order' unless o.offset)
         ].compact.join(' ')
 
         if o.offset
