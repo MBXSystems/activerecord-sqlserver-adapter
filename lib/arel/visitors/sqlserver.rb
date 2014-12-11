@@ -74,9 +74,8 @@ module Arel
           select_frags << '__order'
         end
 
-        projection_list = projections.map { |x| projection_to_sql_remove_distinct(x, core, a) }
-        partitions = projection_list.map{ |proj| proj.gsub(/\.\*/, '.[id]') }.join(', ')
-        projection_list = projection_list.join(', ')
+        projection_list = projections.map { |x| projection_to_sql_remove_distinct(x, core, a) }.join(', ')
+        partitions = projections.map{ |x| partition_to_sql_remove_distinct(x, core, a) }.join(', ')
 
         sql = [
           ('SELECT'),
@@ -207,6 +206,14 @@ module Arel
           frag.gsub!(/\s*DISTINCT\s+/, '')
         end
         frag
+      end
+
+      def partition_to_sql_remove_distinct(x, core, a)
+        if x.respond_to?( :name ) and x.name == '*'
+          "[#{x.relation.table_name}].[#{x.relation.primary_key.name}]"
+        else
+          projection_to_sql_remove_distinct(x, core, a)
+        end
       end
 
       def source_with_lock_for_select_statement(o, a)
