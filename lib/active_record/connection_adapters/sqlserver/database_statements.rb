@@ -48,6 +48,20 @@ module ActiveRecord
           do_execute 'BEGIN TRANSACTION'
         end
 
+        def transaction_isolation_levels
+          {
+            read_uncommitted: "READ UNCOMMITTED",
+            read_committed:   "READ COMMITTED",
+            repeatable_read:  "REPEATABLE READ",
+            serializable:     "SERIALIZABLE"
+          }
+        end
+
+        def begin_isolated_db_transaction(isolation)
+          begin_db_transaction
+          execute "SET TRANSACTION ISOLATION LEVEL #{transaction_isolation_levels.fetch(isolation)}"
+        end
+
         def commit_db_transaction
           disable_auto_reconnect { do_execute 'COMMIT TRANSACTION' }
         end
