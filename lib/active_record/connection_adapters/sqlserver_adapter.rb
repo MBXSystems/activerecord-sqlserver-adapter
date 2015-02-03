@@ -45,7 +45,10 @@ module ActiveRecord
                      :enable_default_unicode_types, :auto_connect, :cs_equality_operator,
                      :lowercase_schema_reflection, :auto_connect_duration, :showplan_option
 
+      cattr_accessor :use_output_inserted, instance_accessor: false
+
       self.enable_default_unicode_types = true
+      self.use_output_inserted = true
 
       class BindSubstitution < Arel::Visitors::SQLServer # :nodoc:
         include Arel::Visitors::BindVisitor
